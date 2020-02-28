@@ -43,7 +43,7 @@ func TestNoRouter(t *testing.T) {
 	assert.Equal("http.request", span.OperationName())
 	assert.Equal(ext.SpanTypeWeb, span.Tag(ext.SpanType))
 	assert.Equal("my-router", span.Tag(ext.ServiceName))
-	assert.Equal("GET unknown", span.Tag(ext.ResourceName))
+	assert.Equal("GET", span.Tag(ext.ResourceName))
 	assert.Equal("200", span.Tag(ext.HTTPCode))
 	assert.Equal("GET", span.Tag(ext.HTTPMethod))
 	assert.Equal("/user/123", span.Tag(ext.HTTPURL))
@@ -61,7 +61,7 @@ func TestTraceWithRouter(t *testing.T) {
 		span, ok := tracer.SpanFromContext(r.Context())
 		assert.True(ok)
 		assert.Equal(span.(mocktracer.Span).Tag(ext.ServiceName), "my-router")
-		id := c.URLParams["id"] //chi.URLParam(r, "id")
+		id := c.URLParams["id"]
 		w.Write([]byte(id))
 	})
 	r := httptest.NewRequest("GET", "/user/123", nil)

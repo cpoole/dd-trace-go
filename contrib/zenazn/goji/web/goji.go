@@ -19,6 +19,9 @@ import (
 )
 
 // Middleware returns a goji middleware function that will trace incoming requests.
+// If goji's Router middleware is also installed, the tracer will be able to determine
+// the original route name (e.g. "/user/:id"), and include it as part of the traces' resource
+// names.
 func Middleware(opts ...Option) func(*web.C, http.Handler) http.Handler {
 	cfg := new(config)
 	defaults(cfg)
@@ -30,12 +33,11 @@ func Middleware(opts ...Option) func(*web.C, http.Handler) http.Handler {
 	}
 	return func(c *web.C, h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			route := "unknown"
+			resource := r.Method
 			p := web.GetMatch(*c).RawPattern()
 			if p != nil {
-				route = fmt.Sprintf("%s", p)
+				resource += " " + fmt.Sprintf("%s", p)
 			}
-			resource := r.Method + " " + route
 			httputil.TraceAndServe(h, w, r, cfg.serviceName, resource, cfg.spanOpts...)
 		})
 	}
