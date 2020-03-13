@@ -25,8 +25,10 @@ import (
 // the original route name (e.g. "/user/:id"), and include it as part of the traces' resource
 // names.
 func Middleware(opts ...Option) func(*web.C, http.Handler) http.Handler {
-	var cfg config
-	var warning sync.Once
+	var (
+		cfg      config
+		warnonce sync.Once
+	)
 	defaults(&cfg)
 	for _, fn := range opts {
 		fn(&cfg)
@@ -41,7 +43,7 @@ func Middleware(opts ...Option) func(*web.C, http.Handler) http.Handler {
 			if p != nil {
 				resource += fmt.Sprintf(" %s", p)
 			} else {
-				warning.Do(func() {
+				warnonce.Do(func() {
 					log.Warn("contrib/zenazn/goji: routes are unavailable. To enable them add the goji Router middleware before the tracer middleware.")
 				})
 			}
