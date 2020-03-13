@@ -23,10 +23,10 @@ import (
 // the original route name (e.g. "/user/:id"), and include it as part of the traces' resource
 // names.
 func Middleware(opts ...Option) func(*web.C, http.Handler) http.Handler {
-	cfg := new(config)
-	defaults(cfg)
+	var cfg config
+	defaults(&cfg)
 	for _, fn := range opts {
-		fn(cfg)
+		fn(&cfg)
 	}
 	if !math.IsNaN(cfg.analyticsRate) {
 		cfg.spanOpts = append(cfg.spanOpts, tracer.Tag(ext.EventSampleRate, cfg.analyticsRate))
