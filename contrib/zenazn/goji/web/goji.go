@@ -10,10 +10,12 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"sync"
 
 	"gopkg.in/DataDog/dd-trace-go.v1/contrib/internal/httputil"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/ext"
 	"gopkg.in/DataDog/dd-trace-go.v1/ddtrace/tracer"
+	"gopkg.in/DataDog/dd-trace-go.v1/internal/log"
 
 	"github.com/zenazn/goji/web"
 )
@@ -24,6 +26,7 @@ import (
 // names.
 func Middleware(opts ...Option) func(*web.C, http.Handler) http.Handler {
 	var cfg config
+	var warning sync.Once
 	defaults(&cfg)
 	for _, fn := range opts {
 		fn(&cfg)
@@ -36,7 +39,11 @@ func Middleware(opts ...Option) func(*web.C, http.Handler) http.Handler {
 			resource := r.Method
 			p := web.GetMatch(*c).RawPattern()
 			if p != nil {
-				resource += " " + fmt.Sprintf("%s", p)
+				resource += fmt.Sprintf(" %s", p)
+			} else {
+				warning.Do(func() {
+					log.Warn("contrib/zenazn/goji: routes are unavailable. To enable them add the goji Router middleware before the tracer middleware.")
+				})
 			}
 			httputil.TraceAndServe(h, w, r, cfg.serviceName, resource, cfg.spanOpts...)
 		})
